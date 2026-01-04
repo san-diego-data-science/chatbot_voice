@@ -1,0 +1,32 @@
+
+> gemini-voice-assistant@1.0.0 dev
+> tsx src/server.ts
+
+Fetching form fields...
+Form fields detected: [
+  {
+    id: 'entry.2005620554',
+    label: 'Name',
+    required: true,
+    type: 'text'
+  },
+  {
+    id: 'entry.1045781291',
+    label: 'Email',
+    required: true,
+    type: 'email'
+  },
+  {
+    id: 'entry.1166974658',
+    label: 'Phone number',
+    required: false,
+    type: 'text'
+  },
+  {
+    id: 'entry.839337160',
+    label: 'Comments',
+    required: false,
+    type: 'text'
+  }
+]
+Server running on http://localhost:3000

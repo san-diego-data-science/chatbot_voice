@@ -5,22 +5,16 @@
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "outDir": "dist",
-    "rootDir": "./",
+    "rootDir": "src",
     "strict": true,
-    "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "*": [
-        "src/*"
-      ]
-    }
+    "skipLibCheck": true
   },
   "include": [
-    "src/**/*.ts",
-    "test/**/*.ts"
+    "src/**/*.ts"
   ],
   "exclude": [
-    "src/public/**/*"
+    "src/public/**/*",
+    "test/**/*"
   ],
   "ts-node": {
     "esm": true,
