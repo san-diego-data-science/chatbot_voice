@@ -65,9 +65,6 @@ app.use(express.json());
 // API to check health or manually trigger things if needed
 app.get('/api/health', (req, res) => res.send('OK'));
 
-// API for the frontend to get the tool definition if we were doing client-side tools, 
-// but we are doing server-side proxying.
-
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
@@ -85,16 +82,20 @@ wss.on('connection', (ws: WebSocket) => {
         // Send initial setup message with config
         const setupMessage = {
             setup: {
-                model: "models/gemini-2.0-flash-exp", // or relevant model supporting audio
+                model: "models/gemini-2.5-flash-native-audio-preview-12-2025",
                 generation_config: {
                     response_modalities: ["AUDIO"],
                     speech_config: {
                         voice_config: {
                             prebuilt_voice_config: {
-                                voice_name: "Puck"
+                                voice_name: "Zephyr"
                             }
                         }
                     }
+                },
+                context_window_compression: { // Added to match snippet logic (snake_case for raw JSON)
+                    trigger_tokens: 25600,
+                    sliding_window: { target_tokens: 12800 }
                 },
                 system_instruction: {
                     parts: [{ text: systemInstruction }]
@@ -110,8 +111,7 @@ wss.on('connection', (ws: WebSocket) => {
                                     properties: {
                                         data: {
                                             type: "OBJECT",
-                                            description: "Key-value pairs where keys are the field IDs (e.g., entry.12345) and values are the user's answers.",
-                                            additionalProperties: { type: "STRING" }
+                                            description: "Key-value pairs where keys are the field IDs (e.g., entry.12345) and values are the user's answers."
                                         }
                                     },
                                     required: ["data"]
@@ -126,10 +126,21 @@ wss.on('connection', (ws: WebSocket) => {
     });
 
     geminiWs.on('message', async (data: any) => {
+        if (Buffer.isBuffer(data)) {
+            // It's likely binary audio data or a binary frame
+            ws.send(data);
+            return;
+        }
+
         try {
-            const msg = JSON.parse(data.toString());
+            const strData = data.toString();
+            // Try to parse as JSON first
+            const msg = JSON.parse(strData);
 
             // Handle server-side tool calls
+            // Note: serverContent is the new structure, but older 'toolCall' might be used depending on API version
+            // For BidiGenerateContent, toolCall is standard.
+
             if (msg.toolCall) {
                 // Function calls come here
                 const functionCalls = msg.toolCall.functionCalls;
@@ -185,22 +196,11 @@ wss.on('connection', (ws: WebSocket) => {
                 }
             }
 
-            // Forward raw data to client (audio, etc.)
-            // Note: The client expects the raw binary or JSON structure. 
-            // For simplicity in proxying, we often just pass the raw message if it's text, 
-            // or binary if it's binary.
-            // But `data` here from 'ws' 'message' event is likely Buffer or ArrayBuffer.
-
+            // Always forward to client, even if we processed a tool call (Gemini might send audio with it or separately)
             ws.send(data);
 
         } catch (e) {
-            // If it's not JSON, it might be binary audio data from Gemini to Client? 
-            // Actually Gemini Bidi API sends JSONs with base64 encoded audio usually, or binary frames.
-            // We should verify the protocol.
-            // For now, simple pass-through is risky if we need to intercept tool calls which are JSON.
-            // The parsing above `JSON.parse` handles the JSON messages.
-            // If it throws, it means it's binary, which we should just forward.
-
+            // Not JSON, just forward raw
             ws.send(data);
         }
     });
@@ -209,18 +209,13 @@ wss.on('connection', (ws: WebSocket) => {
         console.error('Gemini WS error:', err);
     });
 
-    geminiWs.on('close', () => {
-        console.log('Gemini WS closed');
+    geminiWs.on('close', (code, reason) => {
+        console.log(`Gemini WS closed with code ${code} and reason: ${reason?.toString()}`);
         ws.close();
     });
 
     // Handle messages from the client (browser)
     ws.on('message', (message) => {
-        // The client will send:
-        // 1. Initial setup? No, we did that.
-        // 2. Audio chunks (RealtimeInput).
-        // 3. Text/other events.
-
         // We forward everything to Gemini.
         if (geminiWs.readyState === WebSocket.OPEN) {
             geminiWs.send(message);

@@ -164,9 +164,31 @@ async function connect() {
             });
         };
 
-        ws.onmessage = (event) => {
+        ws.onmessage = async (event) => {
+            let data = event.data;
+
+            if (data instanceof Blob) {
+                // If we get a blob, it might be raw audio or text. 
+                // For this specific setup, we're likely receiving JSON text frames mostly, 
+                // BUT the server forwards 'ws.send(data)' which could be a Buffer from Gemini.
+                // If it is a Buffer, it becomes a Blob here. 
+                const text = await data.text();
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    console.error("Received non-JSON blob:", text.substring(0, 50));
+                    return;
+                }
+            } else if (typeof data === 'string') {
+                try {
+                    data = JSON.parse(data);
+                } catch (e) {
+                    console.error("Received non-JSON text:", data.substring(0, 50));
+                    return;
+                }
+            }
+
             // Handle server (Gemini) messages
-            const data = JSON.parse(event.data);
             if (data.serverContent?.modelTurn?.parts) {
                 data.serverContent.modelTurn.parts.forEach(part => {
                     if (part.inlineData && part.inlineData.mimeType.startsWith('audio')) {
