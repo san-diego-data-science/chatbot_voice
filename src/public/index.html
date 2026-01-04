@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini Voice Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1>Voice Assistant</h1>
+      <p>Tap to start the conversation</p>
+    </header>
+
+    <main>
+      <button id="mic-button" class="mic-button" aria-label="Start Listening">
+        <span class="material-symbols-outlined icon">mic</span>
+        <div class="pulse-ring"></div>
+      </button>
+
+      <div id="status-display" class="status-hidden">
+        <span class="status-dot"></span>
+        <span id="status-text">Disconnected</span>
+      </div>
+      
+      <!-- Hidden canvas for audio visualization if we want to add it later -->
+      <canvas id="visualizer"></canvas>
+    </main>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
