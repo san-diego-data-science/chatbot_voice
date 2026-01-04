@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { GoogleFormHandler, FORM_FIELDS } from '../src/form';
+import { GoogleFormHandler, FORM_FIELDS } from '../src/form.js';
 
 describe('GoogleFormHandler', () => {
   const formUrl = 'https://docs.google.com/forms/test';
